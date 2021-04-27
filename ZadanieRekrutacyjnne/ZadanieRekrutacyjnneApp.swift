@@ -9,7 +9,6 @@ import SwiftUI
 
 @main
 struct ZadanieRekrutacyjnneApp: App {
-    @State var test: String = "s"
     var body: some Scene {
         WindowGroup {
             WeatherDetailsView()
