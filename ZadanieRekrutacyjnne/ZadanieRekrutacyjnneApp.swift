@@ -12,9 +12,7 @@ struct ZadanieRekrutacyjnneApp: App {
     @State var test: String = "s"
     var body: some Scene {
         WindowGroup {
-            //CitySelectionView(viewModel: CitySelectionViewModel(city: $test))
             WeatherDetailsView()
-           // ContentView()
         }
     }
 }

@@ -7,8 +7,15 @@
 
 import Foundation
 
-enum AppError: Error {
+enum AppError: Error, Equatable {
     case network(description: String)
     case parse(description: String)
     case noData
+    case wrongCity
+    case responseError(message: String)
+    case unknown
+}
+
+enum ErrorMessage: String {
+    case noCity = "city not found"
 }

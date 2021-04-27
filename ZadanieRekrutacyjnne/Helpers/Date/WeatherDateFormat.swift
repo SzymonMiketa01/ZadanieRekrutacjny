@@ -9,4 +9,5 @@ import Foundation
 
 enum WeatherDateFormat: String {
     case shortTime = "HH:mm"
+    case date = "dd MMM yyyy"
 }

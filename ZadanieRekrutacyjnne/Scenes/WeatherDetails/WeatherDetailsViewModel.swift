@@ -9,10 +9,12 @@ import Foundation
 import Combine
 import SwiftUI
 
-class WeatherDetailsViewModel: ObservableObject, Identifiable {
+class WeatherDetailsViewModel: ObservableObject {
     
+    @Published var error: AppError? = nil
     @Published var city: String = ""
     @Published var data: WeatherResponse? = nil
+    @Published var isForecastPresented: Bool = false
     
     private let weatherRepository: WeatherRemoteRepositoryProtocol = WeatherRemoteRepository()
     private var disposables = Set<AnyCancellable>()
@@ -22,6 +24,7 @@ class WeatherDetailsViewModel: ObservableObject, Identifiable {
         
         $city
             .sink(receiveValue:  { [weak self] in
+                UserDefaultsHelper.save(object: $0, for: .city)
                 self?.fetchWeather(request: WeatherRequest(city: $0))
             })
             .store(in: &disposables)
@@ -92,7 +95,8 @@ class WeatherDetailsViewModel: ObservableObject, Identifiable {
             .sink(receiveCompletion: { [weak self] value in
                 guard let self = self else { return }
                 switch value {
-                case .failure:
+                case .failure(let error):
+                    self.error = error
                   self.data = nil
                 case .finished:
                   break
@@ -100,6 +104,7 @@ class WeatherDetailsViewModel: ObservableObject, Identifiable {
             }, receiveValue: { [weak self] weather in
                 guard let self = self else { return }
 
+                self.error = nil
                 self.data = weather
             })
             .store(in: &disposables)

@@ -20,24 +20,39 @@ class BaseRemoteRepository: RemoteRepositoryProtocol {
     
     func createDataTask<T>(with urlRequest: URLRequest) -> AnyPublisher<T, AppError> where T: Decodable {
         urlSession.dataTaskPublisher(for: urlRequest)
-           .mapError { error in
-               return AppError.network(description: error.localizedDescription)
-           }
-           .flatMap(maxPublishers: .max(1), { [unowned self] element in
-            return self.decode(element.data)
-           })
+            .mapError { error in
+                return AppError.network(description: error.localizedDescription)
+            }
+            .flatMap(maxPublishers: .max(1), { [unowned self] element in
+                return self.decode(element.data)
+            })
             .eraseToAnyPublisher()
     }
     
     func decode<T: Decodable>(_ data: Data) -> AnyPublisher<T, AppError> {
-      let decoder = JSONDecoder()
-      decoder.dateDecodingStrategy = .secondsSince1970
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .secondsSince1970
         
-      return Just(data)
-        .decode(type: T.self, decoder: decoder)
-        .mapError { error in
-          .parse(description: error.localizedDescription)
+        return Just(data)
+            .decode(type: T.self, decoder: decoder)
+            .mapError { [weak self]  error in
+                self?.mapResponseError(data: data, error: error) ?? .unknown
+            }
+            .eraseToAnyPublisher()
+    }
+    
+    func mapResponseError(data: Data, error: Error) -> AppError {
+        let decoder = JSONDecoder()
+        do {
+            let errorObject = try decoder.decode(ResponseError.self, from: data)
+            
+            if errorObject.message == ErrorMessage.noCity.rawValue {
+                return AppError.wrongCity
+            } else {
+                return AppError.responseError(message: errorObject.message)
+            }
+        } catch {
+            return .parse(description: error.localizedDescription)
         }
-        .eraseToAnyPublisher()
     }
 }

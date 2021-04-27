@@ -13,37 +13,59 @@ struct WeatherDetailsView: View {
     var body: some View {
         NavigationView {
             content
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                                                NavigationLink(
-                                                    destination: CitySelectionView(
-                                                        viewModel: CitySelectionViewModel(
-                                                            city: $viewModel.city))) {
-                                                    Image(systemName: "slider.horizontal.3")
-                                                }
-
-//                        NavigationLink(
-//                            destination: CitySelectionView(
-//                                viewModel: CitySelectionViewModel(
-//                                    isPresented: $viewModel.showingSheet,
-//                                    city: $viewModel.city))) {
-//                            Image(systemName: "slider.horizontal.3")
-//                        }
-                    }
-                }
-                //.sheet(isPresented: $viewModel.showingSheet, content: {
-//                    CitySelectionView(
-//                        viewModel: CitySelectionViewModel(
-//                            isPresented: $viewModel.showingSheet,
-//                            city: $viewModel.city))
-//                })
-        }.accentColor(viewModel.isDay ? .black : .white)
-        
-        
+                .navigationBarItems(trailing: NavigationLink(
+                    destination: CitySelectionView(
+                        viewModel: CitySelectionViewModel(
+                            city: $viewModel.city))) {
+                    Image(systemName: "slider.horizontal.3")
+                })
+        }.accentColor(viewModel.isDay ? .black : .gray)
+        .fullScreenCover(isPresented: $viewModel.isForecastPresented) {
+            NavigationView {
+                WeatherForecastView(city: viewModel.city)
+                    .navigationTitle("Prognoza")
+                    .navigationBarItems(leading:
+                                            Button("Wróć") {
+                                                viewModel.isForecastPresented = false
+                                            }.foregroundColor(.blue))
+                    
+                    .background(Image("weatherForecast")
+                                    .resizable()
+                                    .edgesIgnoringSafeArea(.all))
+            }
+        }
     }
     
     var content: some View {
+        
         VStack {
+            if viewModel.error == .some(.wrongCity) {
+                wrongCityView
+            } else {
+                mainView
+            }
+        }
+        .foregroundColor(.white)
+        .background(Image(viewModel.backgroundImage)
+                        .resizable()
+                        .edgesIgnoringSafeArea(.all))
+        
+    }
+    
+    var mainView: some View {
+        Group {
+            basicInfo
+            Spacer()
+                .frame(height: 20)
+            detailsRow
+            Spacer()
+            forecastButton
+            Spacer().frame(height: 30)
+        }
+    }
+    
+    var basicInfo: some View {
+        Group {
             Text(viewModel.cityName)
                 .font(.title)
                 .fontWeight(.bold)
@@ -52,14 +74,34 @@ struct WeatherDetailsView: View {
             Text(viewModel.temperature)
                 .font(.largeTitle)
                 .fontWeight(.bold)
-            Spacer()
-                .frame(height: 20)
-            detailsRow
         }
-        .foregroundColor(.white)
-        .background(Image(viewModel.backgroundImage)
-                        .resizable()
-                        .edgesIgnoringSafeArea(.all))
+    }
+    
+    var wrongCityView: some View {
+        VStack {
+            HStack{
+                Spacer()
+                Text("Nie ma takiego miasta").font(.largeTitle)
+                Spacer()
+            }
+            Spacer()
+        }
+    }
+    
+    var forecastButton: some View {
+        Button(action: {
+            viewModel.isForecastPresented = true
+        }, label: {
+            VStack {
+                Divider().foregroundColor(.white)
+                Text("Prognoza")
+                    .fontWeight(.semibold)
+                    .font(.title)
+                    .padding()
+                    .foregroundColor(.white)
+                Divider().foregroundColor(.white)
+            }.background(Color.white.opacity(0.5))
+        })
     }
     
     var detailsRow: some View {
@@ -68,18 +110,16 @@ struct WeatherDetailsView: View {
                 VStack(alignment: .leading)
                 {
                     Text("WSCHÓD SŁOŃCA")
-                        .font(.subheadline)
+                        .font(.caption)
                         .fontWeight(.bold)
-                        .foregroundColor(.black)
                     Text(viewModel.sunrise)
                         .font(.headline)
                 }.padding(.leading, 20.0)
                 Spacer()
                 VStack(alignment: .trailing) {
                     Text("ZACHÓD SŁOŃCA")
-                        .font(.subheadline)
+                        .font(.caption)
                         .fontWeight(.bold)
-                        .foregroundColor(.black)
                     Text(viewModel.sunset)
                         .font(.headline)
                 }.padding(.trailing, 20.0)
@@ -89,9 +129,8 @@ struct WeatherDetailsView: View {
                 VStack(alignment: .leading)
                 {
                     Text("WIATR")
-                        .font(.subheadline)
+                        .font(.caption)
                         .fontWeight(.bold)
-                        .foregroundColor(.black)
                     Text(viewModel.wind)
                         .font(.headline)
                 }.padding(.leading, 20.0)
@@ -99,9 +138,8 @@ struct WeatherDetailsView: View {
                 Spacer()
                 VStack(alignment: .trailing) {
                     Text("ODCZUWALNA")
-                        .font(.subheadline)
+                        .font(.caption)
                         .fontWeight(.bold)
-                        .foregroundColor(.black)
                     Text(viewModel.feelingTemp)
                         .font(.headline)
                 }.padding(.trailing, 20.0)
@@ -111,30 +149,21 @@ struct WeatherDetailsView: View {
                 VStack(alignment: .leading)
                 {
                     Text("WILGOTNOŚĆ")
-                        .font(.subheadline)
+                        .font(.caption)
                         .fontWeight(.bold)
-                        .foregroundColor(Color.black)
                     Text(viewModel.humidity)
                         .font(.headline)
                 }.padding(.leading, 20.0)
                 Spacer()
                 VStack(alignment: .trailing) {
                     Text("CIŚNIENIE")
-                        .font(.subheadline)
+                        .font(.caption)
                         .fontWeight(.bold)
-                        .foregroundColor(Color.black)
                     Text(viewModel.pressure)
                         .font(.headline)
                 }.padding(.trailing, 20.0)
             }
             Divider().background(Color.white)
-            Spacer()
         }
-    }
-}
-
-struct WeatherForecastView_Previews: PreviewProvider {
-    static var previews: some View {
-        WeatherDetailsView(viewModel: WeatherDetailsViewModel())
     }
 }
